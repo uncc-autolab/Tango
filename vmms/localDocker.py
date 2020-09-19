@@ -11,11 +11,21 @@ def timeout(command, time_out=1):
     timeout, otherwise return the return value from the command, which
     is typically 0 for success, 1-255 for failure.
     """ 
-
+ 
     # Launch the command
     p = subprocess.Popen(command,
                         stdout=open("/dev/null", 'w'),
                         stderr=subprocess.STDOUT)
+
+    #Debugging Output
+    #p = subprocess.Popen(command,
+    #                    stdout=subprocess.PIPE,
+    #                    stderr=subprocess.STDOUT)
+    
+    #(std, err) = p.communicate()
+    #log = logging.getLogger("LocalDocker")
+    #log.debug("stdout %s " % str(std))    
+    #log.debug("stderr %s " % str(err))
 
     # Wait for the command to complete
     t = 0.0
@@ -136,14 +146,14 @@ class LocalDocker:
         args = ['docker', 'run', '--name', instanceName, '-v']
         args = args + ['%s:%s' % (volumePath, '/home/mount')]
         args = args + [vm.image]
-        args = args + ['sh', '-c']
+        args = args + ['/bin/bash', '-c']
 
-        autodriverCmd = 'autodriver -u %d -f %d -t %d -o %d autolab &> output/feedback' % \
+        autodriverCmd = 'source ~/.bashrc && autodriver -u %d -f %d -t %d -o %d autolab 2>&1 | tee output/feedback' % \
                         (config.Config.VM_ULIMIT_USER_PROC, 
                         config.Config.VM_ULIMIT_FILE_SIZE,
                         runTimeout, config.Config.MAX_OUTPUT_FILE_SIZE)
 
-        args = args + ['cp -r mount/* autolab/; su autolab -c "%s"; \
+        args = args + ['cp -r mount/* autolab/; su -s /bin/bash autolab -c "%s"; \
                         cp output/feedback mount/feedback' % 
                         autodriverCmd]
 
